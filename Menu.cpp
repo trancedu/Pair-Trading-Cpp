@@ -93,7 +93,7 @@ int main(int argc, const char * argv[]) {
                     "id INT NOT NULL,"
                     "symbol1 CHAR(20) NOT NULL,"
                     "symbol2 CHAR(20) NOT NULL,"
-                    "bolatility FLOAT,"
+                    "volatility FLOAT,"
                     "profit_loss FLOAT,"
                     "PRIMARY KEY(symbol1, symbol2)"
                     ");");
@@ -209,13 +209,18 @@ int main(int argc, const char * argv[]) {
                             cout << "Day1 higher" << endl;
                         }
                         else {
+                            i++;
                             cout << "Pair Date " << date1 << " " << date2 << endl;
                             cout << "Day2 higher" << endl;
-                            i++;
                         }
                     }
                     pairPriceMap[make_pair(symbol1, symbol2)] = stockPairPrices;
-                
+                    char sql_Insert[512];
+                    //TODO 插入 pair1stocks 和 pair2stocks 两个表
+//                    sprintf(sql_Insert, "INSERT INTO Pair1Stocks VALUES(\"%s\", \"%s\", %f, %f)",
+//                            id, it->first.first.c_str(), it->first.second.c_str(), 0, 0);
+//                    if (ExecuteSQL(db, sql_Insert) == -1)
+//                        return -1;
                 }
                 break;
                 
@@ -225,12 +230,16 @@ int main(int argc, const char * argv[]) {
             {
                 // "C - Create PairPrices Table\n"
                 char sql_Insert[512];
-//                for (auto it = stockPairs.begin(); it != stockPairs.end(); it++)
-//                {
-//
-//                    sprintf(sql_Insert, "INSERT INTO StockPairs VALUES(\"%s\", \"%s\", %f, %f)",
-//                            it->first.c_str(), it->second.c_str(), )
-//                }
+                int id = 1;
+                for (auto it = pairPriceMap.begin(); it != pairPriceMap.end(); it++)
+                {
+                    sprintf(sql_Insert, "INSERT INTO Pairs VALUES(%d, \"%s\", \"%s\", %f, %f)",
+                            id, it->first.first.c_str(), it->first.second.c_str(), 0, 0);
+                    if (ExecuteSQL(db, sql_Insert) == -1)
+                        return -1;
+                    id++;
+                }
+                
                 break;
             }
                 
