@@ -40,6 +40,10 @@ public:
         lVolume = TradeData.lVolume;
         return *this;
     }
+    string GetsDate() const { return sDate; }
+    double GetdOpen() const { return dOpen; }
+    double GetdClose() const { return dClose; }
+    
 };
 
 
