@@ -30,29 +30,20 @@ int main(int argc, const char * argv[]) {
     if (OpenDatabase(database_name.c_str(), db) != 0)      return -1;
 
     vector<string> symbols;
-    symbols.push_back("MSFT");
-    symbols.push_back("TWTR");
-    symbols.push_back("IBM");
+    map<string, string> stockPairs;
+    stockPairs["AAPL"] = "HPQ";
+    stockPairs["AXP"] = "COF";
+    stockPairs["BAC"] = "JPM";
     map<string, Stock> stockMap;
     
     string sConfigFile = "config.csv";
     map<string, string> config_map = ProcessConfigData(sConfigFile);
     
-    
     string daily_url_common = config_map["daily_url_common"];
-//    cout << daily_url_common.back() << endl;
-    string intraday_url_common = config_map["intraday_url_common"];
     string start_date = config_map["start_date"];
     string end_date = config_map["end_date"];
-    long start_date_intraday = 1640995200;
-    long end_date_intraday = 1646092800;
     string api_token = config_map["api_token"];
-//    string symbol = config_map["symbol"];
-    
-    
-    
-    
-    
+
     bool bCompleted = false;
     char selection;
     while (!bCompleted)
