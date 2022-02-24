@@ -219,12 +219,6 @@ int main(int argc, const char * argv[]) {
                     }
                     pairPriceMap[make_pair(symbol1, symbol2)] = stockPairPrices;
                     char sql_Insert[512];
-                    //TODO 插入 pair1stocks 和 pair2stocks 两个表
-//                    sprintf(sql_Insert, "INSERT INTO Pair1Stocks VALUES(\"%s\", \"%s\", %f, %f)",
-//                            id, it->first.first.c_str(), it->first.second.c_str(), 0, 0);
-//                    if (ExecuteSQL(db, sql_Insert) == -1)
-//                        return -1;
-
                     //WT
                     for (vector<TradeData>::const_iterator itr = trades1.begin(); itr != trades1.end(); itr++)
                     {
@@ -247,8 +241,9 @@ int main(int argc, const char * argv[]) {
                         int rc = ExecuteSQL(db, sql_stmt.str().c_str());
                         if (rc == -1) cout << "Error populating Pair2Stocks. Date: " << (*itr).GetsDate() << endl;
                     }
-
                 }
+                cout << "Successfully Inserted into Pair1Stocks" << endl;
+                cout << "Successfully Inserted into Pair2Stocks" << endl;
                 break;
                 
             }
@@ -260,12 +255,14 @@ int main(int argc, const char * argv[]) {
                 int id = 1;
                 for (auto it = pairPriceMap.begin(); it != pairPriceMap.end(); it++)
                 {
-                    sprintf_s(sql_Insert, "INSERT INTO Pairs VALUES(%d, \"%s\", \"%s\", %f, %f)",
+                    sprintf(sql_Insert, "INSERT INTO StockPairs VALUES(%d, \"%s\", \"%s\", %f, %f)",
                             id, it->first.first.c_str(), it->first.second.c_str(), 0, 0);
+                    cout << sql_Insert << endl;
                     if (ExecuteSQL(db, sql_Insert) == -1)
                         return -1;
                     id++;
                 }
+                cout << "Inserted into StockPairs" << endl;
                 
                 break;
             }
