@@ -4,7 +4,7 @@
 //
 //  Created by 杜学渊 on 2/19/22.
 //
-#pragma once
+
 
 #include "GetMarketData.h"
 

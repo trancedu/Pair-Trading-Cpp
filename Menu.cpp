@@ -77,7 +77,7 @@ int main(int argc, const char * argv[]) {
             case 'A':
             {
                 // drop table existed, create table populate
-                for (auto tableName : {"Pairs",
+                for (auto tableName : {"StockPairs",
                     "Pair1Stocks", "Pair2Stocks", "PairPrices", "Trades"
                 })
                 {
@@ -136,7 +136,7 @@ int main(int argc, const char * argv[]) {
                     "profit_loss REAL," //this could be in Trades--WT
                     "PRIMARY KEY(symbol1, symbol2, date)"
                     ");");
-                //We can leave it and create this table later by selecting from pair1prices and pair2prices.--WT
+                //We can leave it and create this table later by selecting from Pair1Stocks and Pair2Stocks.--WT
                 
                 sql_Createtables[4] = string(
                     "CREATE TABLE IF NOT EXISTS Trades ("
@@ -256,7 +256,7 @@ int main(int argc, const char * argv[]) {
                 for (auto it = pairPriceMap.begin(); it != pairPriceMap.end(); it++)
                 {
                     sprintf(sql_Insert, "INSERT INTO StockPairs VALUES(%d, \"%s\", \"%s\", %f, %f)",
-                            id, it->first.first.c_str(), it->first.second.c_str(), 0, 0);
+                            id, it->first.first.c_str(), it->first.second.c_str(), 0.0, 0.0);
                     cout << sql_Insert << endl;
                     if (ExecuteSQL(db, sql_Insert) == -1)
                         return -1;
@@ -270,7 +270,31 @@ int main(int argc, const char * argv[]) {
             case 'D':
             {
                 // "D - Calculate Volatility\n"
-                break;
+
+                string insert_sql = string("Insert into PairPrices ") +
+                    "Select StockPairs.symbol1 as symbol1, StockPairs.symbol2 as symbol2, "
+                    + "Pair1Stocks.date as date, Pair1Stocks.open as open1, "
+                    + "Pair1Stocks.close as close1, Pair2Stocks.open as open2, "
+                    + "Pair2Stocks.close as close2, 0 as profit_loss "
+                    + "From StockPairs, Pair1Stocks, Pair2Stocks "
+                    + "Where (((StockPairs.symbol1 = Pair1Stocks.symbol) and (StockPairs.symbol2 = Pair2Stocks.symbol)) and (Pair1Stocks.date = Pair2Stocks.date)) "
+                    + "ORDER BY symbol1, symbol2;";
+                cout << "insert statement: " << insert_sql << endl;
+                if (ExecuteSQL(db, insert_sql.c_str()) == -1)
+                    return -1;
+                cout << "Finish insert PairPrices" << endl;
+                
+                string back_test_start_date = "2021-12-31";
+                string calculate_volatility_for_pair = string("Update StockPairs SET volatility =") 
+                        + "(SELECT(AVG((close1/close2)*(close1/close2)) - AVG(close1/close2)*AVG(close1/close2)) as variance " 
+                        + "FROM PairPrices " 
+                        + "WHERE StockPairs.symbol1 = PairPrices.symbol1 AND StockPairs.symbol2 = PairPrices.symbol2 AND PairPrices.date <= \'" 
+                        + back_test_start_date + "\');";
+
+                cout << "calculate volatility statement: " << calculate_volatility_for_pair << endl;
+                if (ExecuteSQL(db, calculate_volatility_for_pair.c_str()) == -1)
+                    return -1;
+                cout << "Finish insert volatility" << endl;
             }
             case 'E':
             {
