@@ -4,8 +4,11 @@
 //
 //  Created by 杜学渊 on 2/19/22.
 //
+#pragma once
 
-#include "GetMarketData.hpp"
+#include "GetMarketData.h"
+
+
 int PullMarketData(const std::string& url_request, std::string& read_buffer)
 {
 

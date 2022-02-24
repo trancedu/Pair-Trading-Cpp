@@ -11,14 +11,14 @@
 #include <stdio.h>
 #include <sqlite3.h>
 
-#include "Trade.hpp"
+#include "Trade.h"
 #include "Database.h"
 
 #include "json/json.h"
 #include "curl/curl.h"
 
 #include "Util.h"
-#include "GetMarketData.hpp"
+#include "GetMarketData.h"
 
 int main(int argc, const char * argv[]) {
     // insert code here...
@@ -89,7 +89,7 @@ int main(int argc, const char * argv[]) {
                 
                 vector<string> sql_Createtables(5, "");
                 sql_Createtables[0] = string(
-                    "CREATE TABLE IF NOT EXISTS Pairs ("
+                    "CREATE TABLE IF NOT EXISTS StockPairs ("
                     "id INT NOT NULL,"
                     "symbol1 CHAR(20) NOT NULL,"
                     "symbol2 CHAR(20) NOT NULL,"
@@ -124,7 +124,7 @@ int main(int argc, const char * argv[]) {
                     "PRIMARY KEY (Symbol, Date)"
                     ");");
             
-                sql_Createtables[3] = string(
+                sql_Createtables[3] = string( 
                     "CREATE TABLE IF NOT EXISTS PairPrices ("
                     "symbol1 CHAR(20) NOT NULL, "
                     "symbol2 CHAR(20) NOT NULL, "
@@ -133,9 +133,10 @@ int main(int argc, const char * argv[]) {
                     "close1 REAL NOT NULL,"
                     "open2 REAL NOT NULL,"
                     "close2 REAL NOT NULL,"
-                    "profit_loss REAL,"
+                    "profit_loss REAL," //this could be in Trades--WT
                     "PRIMARY KEY(symbol1, symbol2, date)"
                     ");");
+                //We can leave it and create this table later by selecting from pair1prices and pair2prices.--WT
                 
                 sql_Createtables[4] = string(
                     "CREATE TABLE IF NOT EXISTS Trades ("
@@ -173,9 +174,11 @@ int main(int argc, const char * argv[]) {
                     Stock stock(symbol, {});
                     PopulateDailyTrades(daily_read_buffer, stock);
                     stockMap[symbol] = stock;
+
                 }
                 cout << "Finished populating stock data" << endl;
                 
+
                 // Populate stockPairPrices
                 for (auto it = stockPairs.begin(); it != stockPairs.end(); it++)
                 {
@@ -221,6 +224,30 @@ int main(int argc, const char * argv[]) {
 //                            id, it->first.first.c_str(), it->first.second.c_str(), 0, 0);
 //                    if (ExecuteSQL(db, sql_Insert) == -1)
 //                        return -1;
+
+                    //WT
+                    for (vector<TradeData>::const_iterator itr = trades1.begin(); itr != trades1.end(); itr++)
+                    {
+                        stringstream sql_stmt;
+                        sql_stmt << "INSERT INTO Pair1Stocks "\
+                            << "VALUES ( '" << symbol1 << "', '" << (*itr).GetsDate() << "', '" << (*itr).GetdOpen() << "', '" << (*itr).GetdHigh() \
+                            << "', '" << (*itr).GetdLow() << "', '" << (*itr).GetdClose() << "', '" << (*itr).GetdAdjClose() << "', '" << (*itr).GetlVolumn() << "');";
+                        //cout << sql_stmt.str();
+                        int rc = ExecuteSQL(db, sql_stmt.str().c_str());
+                        if (rc == -1) cout << "Error populating Pair1Stocks. Date: " << (*itr).GetsDate() << endl;
+                    }
+
+                    for (vector<TradeData>::const_iterator itr = trades2.begin(); itr != trades2.end(); itr++)
+                    {
+                        stringstream sql_stmt;
+                        sql_stmt << "INSERT INTO Pair2Stocks "\
+                            << "VALUES ( '" << symbol2 << "', '" << (*itr).GetsDate() << "', '" << (*itr).GetdOpen() << "', '" << (*itr).GetdHigh() \
+                            << "', '" << (*itr).GetdLow() << "', '" << (*itr).GetdClose() << "', '" << (*itr).GetdAdjClose() << "', '" << (*itr).GetlVolumn() << "');";
+                        //cout << sql_stmt.str();
+                        int rc = ExecuteSQL(db, sql_stmt.str().c_str());
+                        if (rc == -1) cout << "Error populating Pair2Stocks. Date: " << (*itr).GetsDate() << endl;
+                    }
+
                 }
                 break;
                 
@@ -233,7 +260,7 @@ int main(int argc, const char * argv[]) {
                 int id = 1;
                 for (auto it = pairPriceMap.begin(); it != pairPriceMap.end(); it++)
                 {
-                    sprintf(sql_Insert, "INSERT INTO Pairs VALUES(%d, \"%s\", \"%s\", %f, %f)",
+                    sprintf_s(sql_Insert, "INSERT INTO Pairs VALUES(%d, \"%s\", \"%s\", %f, %f)",
                             id, it->first.first.c_str(), it->first.second.c_str(), 0, 0);
                     if (ExecuteSQL(db, sql_Insert) == -1)
                         return -1;
