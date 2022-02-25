@@ -31,9 +31,13 @@ int main(int argc, const char * argv[]) {
 
     
     map<string, string> stockPairs;
-    stockPairs["AAPL"] = "HPQ";
-    stockPairs["AXP"] = "COF";
-    stockPairs["BAC"] = "JPM";
+    
+    //stockPairs["AAPL"] = "HPQ";
+    //stockPairs["AXP"] = "COF";
+    //stockPairs["BAC"] = "JPM";
+    
+    stockPairs = GetPairs("PairTrading.txt");
+    
     vector<string> symbols1;
     vector<string> symbols2;
     vector<string> symbols;
