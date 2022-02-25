@@ -40,3 +40,22 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
 	((string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
+
+//read file to get pairs of stocks
+map<string, string> GetPairs(string pair_file)
+{
+	map<string, string>pairmap;
+	ifstream mfin;
+	mfin.open(pair_file, ios::in);
+	string line,stock1, stock2;
+	while (!mfin.eof())
+	{
+		getline(mfin, line);
+		stringstream sin(line);
+		getline(sin, stock1, ',');
+		getline(sin, stock2);
+		pairmap.insert(pair<string, string>(stock1, stock2));
+
+	}
+	return pairmap;
+}
