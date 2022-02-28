@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdio.h>
 #include <sqlite3.h>
+#include <set>
 
 #include "Trade.h"
 #include "Database.h"
@@ -19,6 +20,7 @@
 
 #include "Util.h"
 #include "GetMarketData.h"
+
 
 int main(int argc, const char * argv[]) {
     // insert code here...
@@ -32,19 +34,21 @@ int main(int argc, const char * argv[]) {
     map<string, string> stockPairs;
 //    stockPairs["AAPL"] = "HPQ";
 //    stockPairs["AXP"] = "COF";
-//    stockPairs["BAC"] = "JPM";
+//    stockPairs["BAC"] = "HPQ";
     stockPairs = GetPairs("PairTrading.txt");
     
-    vector<string> symbols1;
-    vector<string> symbols2;
-    vector<string> symbols;
+    set<string> symbols1;
+    set<string> symbols2;
+    set<string> symbols;
     for (auto it = stockPairs.begin(); it != stockPairs.end(); it++)
     {
-        symbols1.push_back(it->first);
-        symbols2.push_back(it->second);
-        symbols.push_back(it->first);
-        symbols.push_back(it->second);
+        symbols1.insert(it->first);
+        symbols2.insert(it->second);
+        symbols.insert(it->first);
+        symbols.insert(it->second);
     }
+    
+    
     map<string, Stock> stockMap; // 存储每个股票每天的价格
     map<pair<string, string>, StockPairPrices> pairPriceMap; // 存储每个 pair 对应的价格
     
@@ -161,9 +165,7 @@ int main(int argc, const char * argv[]) {
             case 'B':
             {
                 // retrieve for each stock
-                
                 string daily_url_request;
-
                 for (auto& symbol : symbols)
                 {
                     string daily_read_buffer;
@@ -178,98 +180,59 @@ int main(int argc, const char * argv[]) {
 
                 }
                 cout << "Finished populating stock data" << endl;
-                
-
-                // Populate stockPairPrices
-                for (auto it = stockPairs.begin(); it != stockPairs.end(); it++)
-                {
-                    string symbol1, symbol2;
-                    cout << symbol1 << " " << symbol2 << endl;
-                    symbol1 = it->first;
-                    symbol2 = it->second;
-                    StockPairPrices stockPairPrices(make_pair(symbol1, symbol2));
-                    vector<TradeData> trades1 = stockMap[symbol1].getTrades();
-                    vector<TradeData> trades2 = stockMap[symbol2].getTrades();
-                    
-                    // 这边需要每一天两只股票的开盘价和收盘价,需要对每一天进行遍历
-                    // 如何对日期遍历防止日期错开呢? 同向双指针了
-//                    int i = 0, j = 0;
-//                    while (i < trades1.size() && j < trades2.size())
-//                    {
-//                        string date1 = trades1[i].GetsDate();
-//                        string date2 = trades2[j].GetsDate();
-//
-//                        if (date1 == date2)
-//                        {
-//                            PairPrice pairPrice(trades1[i].GetdOpen(), trades1[i].GetdClose(),
-//                                                trades2[j].GetdOpen(), trades2[j].GetdClose());
-//                            stockPairPrices.SetDailyPairPrice(date1, pairPrice);
-//                            i++; j++;
-//                        }
-//                        else if (date1.compare(date2) > 0)
-//                        {
-//                            j++;
-//                            cout << "Pair Date " << date1 << " " << date2 << endl;
-//                            cout << "Day1 higher" << endl;
-//                        }
-//                        else {
-//                            i++;
-//                            cout << "Pair Date " << date1 << " " << date2 << endl;
-//                            cout << "Day2 higher" << endl;
-//                        }
-//                    }
-//                    pairPriceMap[make_pair(symbol1, symbol2)] = stockPairPrices;
-                    char sql_Insert[512];
-                    //WT
-                    
-                    stringstream sql_stmt;
-                    sql_stmt << "INSERT INTO Pair1Stocks Values ";
-                    for (vector<TradeData>::const_iterator itr = trades1.begin(); itr != trades1.end(); itr++)
-                    {
-                        sql_stmt << "( '" << symbol1 << "', '" << (*itr).GetsDate() << "', " << (*itr).GetdOpen() << ", " << (*itr).GetdHigh() \
-                        << ", " << (*itr).GetdLow() << ", " << (*itr).GetdClose() << ", " << (*itr).GetdAdjClose() << ", " << (*itr).GetlVolumn() << " ),";
-                    }
-                    string statement = sql_stmt.str();
-                    statement = statement.substr(0, statement.size() - 1); // delete the last ","
-                    statement += ";";
-        
-                    int rc = ExecuteSQL(db, statement.c_str());
-                    if (rc == -1) cout << "Error populating Pair1Stocks" << endl;
-
-                    stringstream sql_stmt2;
-                    sql_stmt2 << "INSERT INTO Pair2Stocks Values ";
-                    for (vector<TradeData>::const_iterator itr = trades2.begin(); itr != trades2.end(); itr++)
-                    {
-                        sql_stmt2 << "( '" << symbol2 << "', '" << (*itr).GetsDate() << "', " << (*itr).GetdOpen() << ", " << (*itr).GetdHigh() \
-                        << ", " << (*itr).GetdLow() << ", " << (*itr).GetdClose() << ", " << (*itr).GetdAdjClose() << ", " << (*itr).GetlVolumn() << " ),";
-                    }
-                    statement = sql_stmt2.str();
-                    statement = statement.substr(0, statement.size()-1); // delete the last ","
-                    statement += ";";
-                    
-                    rc = ExecuteSQL(db, statement.c_str());
-                    if (rc == -1) cout << "Error populating Pair2Stocks" << endl;
-                }
-                cout << "Successfully Inserted into Pair1Stocks" << endl;
-                cout << "Successfully Inserted into Pair2Stocks" << endl;
                 break;
-                
+
             }
                 
             case 'C':
             {
                 // "C - Create PairPrices Table\n"
-                char sql_Insert[512];
-                int id = 1;
-                for (auto it = pairPriceMap.begin(); it != pairPriceMap.end(); it++)
+                
+                
+                // Populate stockPairPrices
+                int tableID = 0;
+                for (auto &symbols_ : {symbols1, symbols2})
                 {
-                    sprintf(sql_Insert, "INSERT INTO StockPairs VALUES(%d, \"%s\", \"%s\", %f, %f)",
-                            id, it->first.first.c_str(), it->first.second.c_str(), 0.0, 0.0);
-                    cout << sql_Insert << endl;
-                    if (ExecuteSQL(db, sql_Insert) == -1)
-                        return -1;
+                    tableID++;
+                    for (auto &symbol : symbols_)
+                    {
+                        cout << symbol << endl;
+                        vector<TradeData> trades = stockMap[symbol].getTrades();
+                        stringstream sql_stmt;
+                        sql_stmt << "INSERT INTO Pair" << tableID << "Stocks Values ";
+                        for (vector<TradeData>::const_iterator itr = trades.begin(); itr != trades.end(); itr++)
+                        {
+                            sql_stmt << "( '" << symbol << "', '" << (*itr).GetsDate() << "', " << (*itr).GetdOpen() << ", " << (*itr).GetdHigh() \
+                            << ", " << (*itr).GetdLow() << ", " << (*itr).GetdClose() << ", " << (*itr).GetdAdjClose() << ", " << (*itr).GetlVolumn() << " ),";
+                        }
+                        string statement = sql_stmt.str();
+                        statement = statement.substr(0, statement.size() - 1); // delete the last ","
+                        statement += ";";
+                        int rc = ExecuteSQL(db, statement.c_str());
+                        if (rc == -1) cout << "Error populating Pair1Stocks" << endl;
+                    }
+                }
+
+                cout << "Successfully Inserted into Pair1Stocks" << endl;
+                cout << "Successfully Inserted into Pair2Stocks" << endl;
+
+
+                // "C - Create PairPrices Table\n"
+                stringstream sql_Insert;
+                int id = 1;
+                
+                sql_Insert << "INSERT INTO StockPairs VALUES ";
+                for (auto it = stockPairs.begin(); it != stockPairs.end(); it++)
+                {
+                    sql_Insert << "(" << id << ",'" << it->first << "','" << it->second.c_str() << "'," << 0.0 << "," << 0.0 << ")";
+                    if (id != stockPairs.size()) {
+                        sql_Insert << ",";
+                    }
+                    else sql_Insert << ";";
                     id++;
                 }
+                if (ExecuteSQL(db, sql_Insert.str().c_str()) == -1)
+                    return -1;
                 cout << "Inserted into StockPairs" << endl;
                 
                 break;

@@ -75,7 +75,7 @@ int PopulateDailyTrades(const std::string& read_buffer,
     }
     else
     {
-        cout << "\nSucess parsing json\n" << root << endl;
+//        cout << "\nSucess parsing json\n" << root << endl;
         string date;
         float open, high, low, close, adjusted_close;
         long volume;
