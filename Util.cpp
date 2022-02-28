@@ -53,7 +53,7 @@ map<string, string> GetPairs(string pair_file)
 		getline(mfin, line);
 		stringstream sin(line);
 		getline(sin, stock1, ',');
-		getline(sin, stock2);
+		getline(sin, stock2, '\r');
 		pairmap.insert(pair<string, string>(stock1, stock2));
 
 	}
