@@ -136,8 +136,10 @@ int main(int argc, const char * argv[]) {
                     "date CHAR(20) NOT NULL,"
                     "open1 REAL NOT NULL,"
                     "close1 REAL NOT NULL,"
+                    "adjusted_close1 REAL NOT NULL,"
                     "open2 REAL NOT NULL,"
                     "close2 REAL NOT NULL,"
+                    "adjusted_close2 REAL NOT NULL,"
                     "profit_loss REAL," //this could be in Trades--WT
                     "PRIMARY KEY(symbol1, symbol2, date)"
                     ");");
@@ -245,8 +247,8 @@ int main(int argc, const char * argv[]) {
                 string insert_sql = string("Insert into PairPrices ") +
                     "Select StockPairs.symbol1 as symbol1, StockPairs.symbol2 as symbol2, "
                     + "Pair1Stocks.date as date, Pair1Stocks.open as open1, "
-                    + "Pair1Stocks.adjusted_close as close1, Pair2Stocks.open as open2, "
-                    + "Pair2Stocks.adjusted_close as close2, 0 as profit_loss "
+                    + "Pair1Stocks.close as close1, Pair1Stocks.adjusted_close as adjusted_close1, Pair2Stocks.open as open2, "
+                    + "Pair2Stocks.close as close2, Pair2Stocks.adjusted_close as adjusted_close2, 0 as profit_loss "
                     + "From StockPairs, Pair1Stocks, Pair2Stocks "
                     + "Where (((StockPairs.symbol1 = Pair1Stocks.symbol) and (StockPairs.symbol2 = Pair2Stocks.symbol)) and (Pair1Stocks.date = Pair2Stocks.date)) "
                     + "ORDER BY symbol1, symbol2;";
@@ -257,7 +259,7 @@ int main(int argc, const char * argv[]) {
                 
                 string back_test_start_date = "2021-12-31";
                 string calculate_volatility_for_pair = string("Update StockPairs SET volatility =") 
-                        + "(SELECT(AVG((close1/close2)*(close1/close2)) - AVG(close1/close2)*AVG(close1/close2)) as variance " 
+                        + "(SELECT(AVG((adjusted_close1/adjusted_close2)*(adjusted_close1/adjusted_close2)) - AVG(adjusted_close1/adjusted_close2)*AVG(adjusted_close1/adjusted_close2)) as variance " 
                         + "FROM PairPrices " 
                         + "WHERE StockPairs.symbol1 = PairPrices.symbol1 AND StockPairs.symbol2 = PairPrices.symbol2 AND PairPrices.date <= \'" 
                         + back_test_start_date + "\');";
