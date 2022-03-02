@@ -245,8 +245,8 @@ int main(int argc, const char * argv[]) {
                 string insert_sql = string("Insert into PairPrices ") +
                     "Select StockPairs.symbol1 as symbol1, StockPairs.symbol2 as symbol2, "
                     + "Pair1Stocks.date as date, Pair1Stocks.open as open1, "
-                    + "Pair1Stocks.close as close1, Pair2Stocks.open as open2, "
-                    + "Pair2Stocks.close as close2, 0 as profit_loss "
+                    + "Pair1Stocks.adjusted_close as close1, Pair2Stocks.open as open2, "
+                    + "Pair2Stocks.adjusted_close as close2, 0 as profit_loss "
                     + "From StockPairs, Pair1Stocks, Pair2Stocks "
                     + "Where (((StockPairs.symbol1 = Pair1Stocks.symbol) and (StockPairs.symbol2 = Pair2Stocks.symbol)) and (Pair1Stocks.date = Pair2Stocks.date)) "
                     + "ORDER BY symbol1, symbol2;";
