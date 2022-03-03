@@ -3,6 +3,8 @@
 #include <vector>
 #include "Util.h"
 #include <iostream>
+#include <regex>
+#include <string>
 using namespace std;
 
 vector<string> split(string text, char delim) {
@@ -58,4 +60,24 @@ map<string, string> GetPairs(string pair_file)
 
 	}
 	return pairmap;
+}
+
+bool ValidateDouble(const std::string& str) 
+{
+	const basic_regex<char> dbl(R"(^\d+\.?\d?$)");
+	return regex_match(str, dbl);
+}
+
+double ReadDouble(const std::string& prompt) 
+{
+	std::string input;
+	bool match = false;
+
+	while (!match)
+	{
+		std::getline(std::cin, input);
+		match = ValidateDouble(input);
+		if (!match) std::cout << prompt << endl;
+	}
+	return std::stod(input);
 }
