@@ -275,6 +275,7 @@ int main(int argc, const char* argv[]) {
 		{
 			// "E - Back Test\n"
 			double k = ReadDouble("Enter a valid double as parameter k: ");
+			double k_square = k * k;
 			cout << "Your parameter k is: " << fixed << setprecision(2) << k << '\n' << "Backtesting..." << endl;
 			string back_test_start_date = "2022-01-01";
 			// Calculate P/L of Long (Short will be negative of that) 
@@ -286,15 +287,15 @@ int main(int argc, const char* argv[]) {
 			// Convert to Short or Long based on Condition
 			string convert_daily_pl = string("WITH cte AS ( \n")
 				+ "SELECT symbol1, date, close2, "
-				//+ "LAG(close1, 1, 0) OVER (PARTITION BY symbol1 ORDER BY date) AS prev_close1, "
-				//+ "LAG(close2, 1, 0) OVER (PARTITION BY symbol1 ORDER BY date) AS prev_close2, "
 				+ "LAG(close1, 1, 0) OVER (PARTITION BY symbol1 ORDER BY date) / LAG(close2, 1, 0) OVER (PARTITION BY symbol1 ORDER BY date) AS prev_frac "
-				+ "FROM PairPrices ) "
+				+ "FROM PairPrices "
+				+ ") "
 				+ "UPDATE PairPrices AS p "
 				+ "SET profit_loss = (CASE "
 				+ "WHEN ("
-				+ "ABS(  (SELECT c.prev_frac FROM cte AS c WHERE(c.symbol1, c.date) = (p.symbol1, p.date)) - (open1 / open2)  )"
-				+ " > " + to_string(k) + " * ( SELECT sqrt(volatility) FROM StockPairs AS s WHERE s.symbol1 = p.symbol1) "
+				+ "( (SELECT c.prev_frac FROM cte AS c WHERE (c.symbol1, c.date) = (p.symbol1, p.date)) - (open1 / open2) )"
+				+ "* ( (SELECT c.prev_frac FROM cte AS c WHERE (c.symbol1, c.date) = (p.symbol1, p.date)) - (open1 / open2) )"
+				+ " > " + to_string(k_square) + " * ( SELECT volatility FROM StockPairs AS s WHERE s.symbol1 = p.symbol1) "
 				+ ") THEN - profit_loss "
 				+ "ELSE profit_loss "
 				+ "END) "
