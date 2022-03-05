@@ -23,6 +23,19 @@
 #include "Util.h"
 #include "GetMarketData.h"
 
+int dropAllTables(sqlite3* db) {
+
+	for (auto tableName : { "StockPairs",
+		"Pair1Stocks", "Pair2Stocks", "PairPrices", "Trades"
+		})
+	{
+		string sql_Droptable = string("DROP TABLE IF EXISTS ") + string(tableName);
+		if (DropTable(db, sql_Droptable.c_str()) == -1)
+			return -1;
+		cout << "Drop table " << tableName << endl;
+	}
+	return 0;
+}
 
 int main(int argc, const char* argv[]) {
 	// insert code here...
@@ -84,15 +97,8 @@ int main(int argc, const char* argv[]) {
 		case 'A':
 		{
 			// drop table existed, create table populate
-			for (auto tableName : { "StockPairs",
-				"Pair1Stocks", "Pair2Stocks", "PairPrices", "Trades"
-				})
-			{
-				string sql_Droptable = string("DROP TABLE IF EXISTS ") + string(tableName);
-				if (DropTable(db, sql_Droptable.c_str()) == -1)
-					return -1;
-				cout << "Drop table " << tableName << endl;
-			}
+			if (dropAllTables(db) == -1)
+				return -1;
 
 			vector<string> sql_Createtables(5, "");
 			sql_Createtables[0] = string(
@@ -270,6 +276,8 @@ int main(int argc, const char* argv[]) {
 			if (ExecuteSQL(db, calculate_volatility_for_pair.c_str()) == -1)
 				return -1;
 			cout << "Finish insert volatility" << endl;
+
+			break;
 		}
 		case 'E':
 		{
@@ -321,6 +329,25 @@ int main(int argc, const char* argv[]) {
 		case 'F':
 		{
 			// "F - Calculate Profit and Loss For Each Pair\n"
+			string delete_existing_data = string("DELETE FROM Trades;");
+
+			string insert_Trades_sql = string("INSERT INTO Trades ") +
+				"SELECT symbol1, symbol2, date, profit_loss "
+				+ "FROM PairPrices "
+				+ "WHERE profit_loss <> 0 "
+				+ "ORDER BY symbol1, symbol2;";
+
+			if (ExecuteSQL(db, delete_existing_data.c_str()) == -1) {
+				cout << "Errors when deleting data from Trades" << endl;
+				return -1;
+			}
+
+			if (ExecuteSQL(db, insert_Trades_sql.c_str()) == -1) {
+				cout << "Errors when inserting into Trades" << endl;
+				return -1;
+			}
+			cout << "Successfully inserted pnl for each pair into Trades Table" << endl;
+
 			break;
 		}
 		case 'G':
@@ -331,6 +358,9 @@ int main(int argc, const char* argv[]) {
 		case 'H':
 		{
 			// "H - Drop All the Tables\n"
+			if (dropAllTables(db) == -1)
+				return -1;
+
 			break;
 		}
 		case 'X':
