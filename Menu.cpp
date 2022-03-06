@@ -4,6 +4,7 @@
 //
 //  Created by 杜学渊 on 2/19/22.
 //  Modified by Hubert on 3/2/22
+//  Modified by Qinyan on 3/5/22
 //
 
 #include <iostream>
@@ -38,18 +39,25 @@ int main(int argc, const char* argv[]) {
 	//    stockPairs["AXP"] = "COF";
 	//    stockPairs["BAC"] = "HPQ";
 	stockPairs = GetPairs("PairTrading.txt");
-
 	set<string> symbols1;
 	set<string> symbols2;
 	set<string> symbols;
+	vector<pair<string, string>>allpairs;
+	//vector< StockPairPrices>allpairprices;
+
 	for (auto it = stockPairs.begin(); it != stockPairs.end(); it++)
 	{
 		symbols1.insert(it->first);
-		symbols2.insert(it->second);
+		//cout << it->first << endl;
+		symbols2.insert(	it->second);
+		//cout << it->second << endl;
 		symbols.insert(it->first);
 		symbols.insert(it->second);
+		allpairs.push_back(*it);
+		//allpairprices.push_back(StockPairPrices(*it));
+		
 	}
-
+	
 
 	map<string, Stock> stockMap; // 存储每个股票每天的价格
 	map<pair<string, string>, StockPairPrices> pairPriceMap; // 存储每个 pair 对应的价格
@@ -182,8 +190,12 @@ int main(int argc, const char* argv[]) {
 				PopulateDailyTrades(daily_read_buffer, stock);
 				stockMap[symbol] = stock;
 
+
 			}
+			
 			cout << "Finished populating stock data" << endl;
+			//getpairprice(stockMap, allpairs, allpairprices);
+	
 			break;
 
 		}
@@ -281,15 +293,16 @@ int main(int argc, const char* argv[]) {
 			// Calculate P/L of Long (Short will be negative of that) 
 			string calculate_daily_long = string("UPDATE PairPrices ")
 				+ "SET profit_loss = \n"
-				+ " 10000 * (close1 - open1) - 10000 * open1 / open2 * (close2 - open2) "
+				+ " 10000 * (close1 - open1) - 10000 * open1 / open2 * (close2 - open2) "//N2= N1 * (Open1d2/Open2d2),
 				+ " WHERE date > \'" + back_test_start_date + "\' ";
 
 			// Convert to Short or Long based on Condition
 			string convert_daily_pl = string("WITH cte AS ( \n")
 				+ "SELECT symbol1, date, close2, "
 				+ "LAG(close1, 1, 0) OVER (PARTITION BY symbol1 ORDER BY date) / LAG(close2, 1, 0) OVER (PARTITION BY symbol1 ORDER BY date) AS prev_frac "
-				+ "FROM PairPrices "
-				+ ") "
+				+ "FROM PairPrices "//LAG(待查询的参数列名,向上偏移的位数,超出最上面边界的默认值) OVER:分组依据
+				//Close1d1 and Close2d1 are the closing prices on day d – 1 for stocks 1 and 2
+				+ ") "				
 				+ "UPDATE PairPrices AS p "
 				+ "SET profit_loss = (CASE "
 				+ "WHEN ("
@@ -324,8 +337,75 @@ int main(int argc, const char* argv[]) {
 			break;
 		}
 		case 'G':
-		{
+		{	cout << "Show stock pairs" << endl;
+			string select_pairs = "SELECT id,symbol1,symbol2 FROM StockPairs";
+			if (ShowTable(db, select_pairs.c_str()) == -1)
+				return -1;
+			cout << "********************************************************" << endl;
+			cout<<"Choose a pair of stock, please enter the id of the pair" << endl;
+			int id_of_pair;
+			cin >> id_of_pair;
+			if (id_of_pair > stockPairs.size()&& id_of_pair<0) {
+				cout << "Pair id out of range,please enter a valid id" << endl;
+				return -1;
+			}
+			cout << "Your choice:" << endl;
+			string stock1 = allpairs[id_of_pair - 1].first;
+			string stock2 = allpairs[id_of_pair - 1].second;
+			cout << stock1<< "," <<stock2 << endl;
+			//Get volatility from StockPairs
+			string selectvol = string("SELECT volatility FROM StockPairs WHERE symbol1=\'") + stock1 + "\'AND symbol2 =\'" + stock2 + "\';";
+			int rc = 0;
+			char* error = nullptr;
+			char** results = NULL;
+			int rows, columns;
+			double vol = 0;
+			rc = sqlite3_get_table(db, selectvol.c_str(), &results, &rows, &columns, &error);
+			if (rc)
+			{
+				cerr << "Error executing SQLite3 query: " << sqlite3_errmsg(db) << std::endl << std::endl;
+				sqlite3_free(error);
+				return -1;
+			}
+			else {
+				vol = stod(results[1]);
+			}
+			
+			cout <<"Volatility of the pair: "<<vol << endl;
+			double close1d1, close2d1, open1d2, open2d2, close1d2,close2d2, pnl, k;
+			const double N1 = 10000;
+			int longstate = 0;//longstate=1: Long, longstate=-1,short
+			
+			cout << "Please choose close prices for the first stock of day 1" << endl;
+			cin >> close1d1;
+			cout<< "Please choose close prices for the second stock of day 1" << endl;
+			cin >> close2d1;
+		
+			cout << "Please choose open prices for the first stock of day 2" << endl;
+			cin >> open1d2;
+			cout << "Please choose open prices for the second stock of day 2" << endl;
+			cin >> open2d2;
+			cout << "Please choose close prices for the first stock of day 2" << endl;
+			cin >> close1d2;
+			cout << "Please choose close prices for the second stock of day 2" << endl;
+			cin >> close2d2;
+			cout << "Choose your k" << endl;
+			cin >> k;
+			if (abs(close1d1 / close2d1 - open1d2 / open2d2) > (vol * k))
+			{
+				longstate = -1;
+				cout << stock1 << " is short and " << stock2 << " is long";
+			}
+			else 
+			{
+				longstate = 1;
+				cout << stock1 << " is long and " << stock2 << " is short" << endl;
+			}
+			double N2 = N1 * open1d2 / open2d2;
+			cout << "Purchase " << N1 << " " << stock1 << " and " << N2 << " " << stock2 << endl;
+			pnl = (-longstate * (open1d2 - close1d2) * N1) + (longstate * N2 * (open2d2 - close2d2));
 			// "G - Manual Testing\n"
+			cout << "Profit and Loss is " << pnl << endl;
 			break;
 		}
 		case 'H':
