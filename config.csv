@@ -1,6 +1,6 @@
 daily_url_common:https://eodhistoricaldata.com/api/eod/
 intraday_url_common:https://eodhistoricaldata.com/api/intraday/
 start_date:2012-01-02
-end_date:2022-03-01
+end_date:2022-12-31
 api_token:61aabbc91d6638.85412199
 symbol:MSFT,TWTR,IBM

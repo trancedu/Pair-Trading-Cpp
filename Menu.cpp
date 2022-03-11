@@ -312,11 +312,10 @@ int main(int argc, const char* argv[]) {
 			double k = ReadDouble("Enter a valid double as parameter k: ");
 			double k_square = k * k;
 			cout << "Your parameter k is: " << fixed << setprecision(2) << k << '\n' << "Backtesting..." << endl;
-			string back_test_start_date = "2022-01-01";
 			// Calculate P/L of Long (Short will be negative of that) 
 			string calculate_daily_long = string("UPDATE PairPrices ")
 				+ "SET profit_loss = \n"
-				+ " 10000 * (close1 - open1) - 10000 * open1 / open2 * (close2 - open2) "//N2= N1 * (Open1d2/Open2d2),
+				+ " 10000 * (close1 - open1) - CAST(10000 * open1 / open2 AS int) * (close2 - open2) "//N2= N1 * (Open1d2/Open2d2),
 				+ " WHERE date > \'" + back_test_start_date + "\' ";
 
 			// Convert to Short or Long based on Condition
