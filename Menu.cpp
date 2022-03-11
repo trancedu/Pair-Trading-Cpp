@@ -425,18 +425,20 @@ int main(int argc, const char* argv[]) {
 			cin >> close2d2;
 			cout << "Choose your k" << endl;
 			cin >> k;
+			double N2 = N1 * open1d2 / open2d2;
 			if (abs(close1d1 / close2d1 - open1d2 / open2d2) > (vol * k))
 			{
 				longstate = -1;
-                cout << stock1 << " is short and " << stock2 << " is long" << endl;
+				cout << stock1 << " is short for "<<N1<<" shares and " << stock2 << " is long for "<<N2<<" shares";
 			}
 			else 
 			{
 				longstate = 1;
+				cout << stock1 << " is long for " << N1 << " shares and " << stock2 << " is short for " << N2 << " shares";
 				cout << stock1 << " is long and " << stock2 << " is short" << endl;
 			}
-			double N2 = N1 * open1d2 / open2d2;
-			cout << "Purchase " << N1 << " " << stock1 << " and " << N2 << " " << stock2 << endl;
+			
+			
 			pnl = (-longstate * (open1d2 - close1d2) * N1) + (longstate * N2 * (open2d2 - close2d2));
 			// "G - Manual Testing\n"
 			cout << "Profit and Loss is " << pnl << endl;
