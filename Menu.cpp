@@ -57,6 +57,7 @@ int main(int argc, const char* argv[]) {
 		//allpairprices.push_back(StockPairPrices(*it));
 		
 	}
+    vector<string> symbols_vec(symbols.begin(), symbols.end());
 	
 
 	map<string, Stock> stockMap; // 存储每个股票每天的价格
@@ -70,6 +71,7 @@ int main(int argc, const char* argv[]) {
 	string end_date = config_map["end_date"];
 	string api_token = config_map["api_token"];
 
+    string back_test_start_date = "2021-12-31";
 	bool bCompleted = false;
 	char selection;
 	while (!bCompleted)
@@ -178,8 +180,17 @@ int main(int argc, const char* argv[]) {
 		{
 			// retrieve for each stock
 			string daily_url_request;
-			for (auto& symbol : symbols)
+            
+            int Num_threads = 5;
+            vector<string> read_buffers;
+            vector<string> url_requests;
+//
+            
+            
+			for (auto& symbol : symbols_vec)
 			{
+                daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
+                url_requests.push_back(daily_url_request);
 				string daily_read_buffer;
 				cout << "symbol: " << symbol << endl;
 				daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
@@ -189,9 +200,20 @@ int main(int argc, const char* argv[]) {
 				Stock stock(symbol, {});
 				PopulateDailyTrades(daily_read_buffer, stock);
 				stockMap[symbol] = stock;
-
-
 			}
+            
+            // Multi thread but has problems
+//            for (auto& symbol : symbols_vec)
+//            {
+//                daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
+//                url_requests.push_back(daily_url_request);
+//            PullMarketDataMultiThread(url_requests, read_buffers, Num_threads);
+//            for (int i = 0; i < symbols_vec.size(); i++)
+//            {
+//                Stock stock(symbols_vec[i], {});
+//                PopulateDailyTrades(read_buffers[i], stock);
+//                stockMap[symbols_vec[i]] = stock;
+//            }
 			
 			cout << "Finished populating stock data" << endl;
 			//getpairprice(stockMap, allpairs, allpairprices);
@@ -271,7 +293,7 @@ int main(int argc, const char* argv[]) {
 				return -1;
 			cout << "Finish insert PairPrices" << endl;
 
-			string back_test_start_date = "2021-12-31";
+			
 			string calculate_volatility_for_pair = string("Update StockPairs SET volatility =")
 				+ "(SELECT(AVG((adjusted_close1/adjusted_close2)*(adjusted_close1/adjusted_close2)) - AVG(adjusted_close1/adjusted_close2)*AVG(adjusted_close1/adjusted_close2)) as variance "
 				+ "FROM PairPrices "
@@ -282,6 +304,7 @@ int main(int argc, const char* argv[]) {
 			if (ExecuteSQL(db, calculate_volatility_for_pair.c_str()) == -1)
 				return -1;
 			cout << "Finish insert volatility" << endl;
+            break;
 		}
 		case 'E':
 		{
@@ -334,6 +357,18 @@ int main(int argc, const char* argv[]) {
 		case 'F':
 		{
 			// "F - Calculate Profit and Loss For Each Pair\n"
+            // Sum up to get final P/L and update in StockPairs
+            string calculate_sum_pl = string("Update StockPairs SET profit_loss = ")
+                + "(SELECT SUM (PairPrices.profit_loss) "
+                + "FROM PairPrices "
+                + "WHERE (StockPairs.symbol1, StockPairs.symbol2) = (PairPrices.symbol1, PairPrices.symbol2) AND PairPrices.date > \'"
+                + back_test_start_date + "\');";
+
+            if (ExecuteSQL(db, calculate_sum_pl.c_str()) == -1)
+                return -1;
+            cout << "Back Test Finished" << endl;
+
+//            break;
 			break;
 		}
 		case 'G':
@@ -394,7 +429,7 @@ int main(int argc, const char* argv[]) {
 			if (abs(close1d1 / close2d1 - open1d2 / open2d2) > (vol * k))
 			{
 				longstate = -1;
-				cout << stock1 << " is short and " << stock2 << " is long";
+                cout << stock1 << " is short and " << stock2 << " is long" << endl;
 			}
 			else 
 			{
@@ -411,6 +446,15 @@ int main(int argc, const char* argv[]) {
 		case 'H':
 		{
 			// "H - Drop All the Tables\n"
+            for (auto tableName : { "StockPairs",
+                "Pair1Stocks", "Pair2Stocks", "PairPrices", "Trades"
+                })
+            {
+                string sql_Droptable = string("DROP TABLE IF EXISTS ") + string(tableName);
+                if (DropTable(db, sql_Droptable.c_str()) == -1)
+                    return -1;
+                cout << "Drop table " << tableName << endl;
+            }
 			break;
 		}
 		case 'X':
