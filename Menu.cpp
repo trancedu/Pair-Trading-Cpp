@@ -435,7 +435,7 @@ int main(int argc, const char* argv[]) {
 			{
 				longstate = 1;
 				cout << stock1 << " is long for " << N1 << " shares and " << stock2 << " is short for " << N2 << " shares";
-				cout << stock1 << " is long and " << stock2 << " is short" << endl;
+				//cout << stock1 << " is long and " << stock2 << " is short" << endl;
 			}
 			
 			
