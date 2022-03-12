@@ -58,11 +58,10 @@ int PullMarketData(const std::string& url_request, std::string& read_buffer)
 }
 
 
-int PullMarketDataMultiURL(const vector<std::string> & url_requests, vector<std::string> & read_buffers) {
-    //global initiliation of curl before calling a function
-    curl_global_init(CURL_GLOBAL_ALL);
+int PullMarketDataMultiURL(std::vector<std::string>::const_iterator url_requests, std::vector<std::string>::iterator read_buffers, int size) {
+
     
-    for (int j = 0; j < url_requests.size(); j++) {
+    for (int j = 0; j < size; j++) {
         //creating session handle
         CURL * handle;
 
@@ -77,20 +76,19 @@ int PullMarketDataMultiURL(const vector<std::string> & url_requests, vector<std:
             cout << "curl_easy_init failed" << endl;
             return -1;
         }
-//        int a = PullMarketData(url_requests[j], read_buffers[j]);
-        curl_easy_setopt(handle, CURLOPT_URL, url_requests[j].c_str());
-    //    curl_easy_setopt(handle, CURLOPT_URL, url);
+        curl_easy_setopt(handle, CURLOPT_URL, (*url_requests).c_str());
         
         //adding a user agent
         curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0");
         curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0);
+        //curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
         curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0);
 
         // send all data to this function
         curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, WriteCallback);
 
         // we pass our 'chunk' struct to the callback function
-        curl_easy_setopt(handle, CURLOPT_WRITEDATA, &read_buffers[j]);
+        curl_easy_setopt(handle, CURLOPT_WRITEDATA, &(* read_buffers));
 
         //perform a blocking file transfer
         result = curl_easy_perform(handle);
@@ -98,41 +96,39 @@ int PullMarketDataMultiURL(const vector<std::string> & url_requests, vector<std:
         // check for errors
         if (result != CURLE_OK) {
             fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(result));
-            cout << "curl: " << url_requests[j].c_str() << endl;
+            cout << "curl: " << (*url_requests).c_str() << endl;
             return -1;
         }
+        cout << *url_requests << endl;
+        url_requests++;
+        read_buffers++;
     }
     return 0;
 }
 
-//
-//void PullMarketDataMultiThread(const vector<std::string> & url_requests, vector<std::string> & read_buffers, int Num_threads)
-//{
-//    int size = url_requests.size() / Num_threads;
-//    read_buffers.resize(Num_threads);
-//    vector<thread> threads;
-//    vector<vector<string>> url_requests_total;
-//    for (int j = 0; j < Num_threads; j++)
-//    {
-//        if (j == Num_threads - 1){
-//            read_buffers[j].resize(url_requests.size() - j * size);
-//            url_requests_total.push_back(vector<string>(url_requests.begin() + j * size, url_requests.end()));
-//        } else {
-//            read_buffers[j].resize(size);
-//            url_requests_total.push_back(vector<string>(url_requests.begin() + j * size, url_requests.begin() + j * size + size));
-//        }
-//    }
-//    
-//    for (int j = 0; j < Num_threads; j++) {
-//        threads.push_back(thread(PullMarketDataMultiURL, ref(url_requests_total[j]), ref(read_buffers[j])));
-//    }
-//    
-//    for (thread &t : threads) {
-//        if (t.joinable()) {
-//            t.join();
-//        }
-//    }
-//};
+void PullMarketDataMultiThread(const std::vector<std::string> & url_requests, std::vector<std::string> & read_buffers, int Num_threads)
+{
+    //global initiliation of curl before calling a function
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    int size = url_requests.size() / Num_threads;
+    read_buffers.resize(url_requests.size());
+    vector<thread> threads;
+    for (int j = 0; j < Num_threads; j++)
+    {
+        if (j == Num_threads - 1){
+            threads.push_back(thread(PullMarketDataMultiURL, url_requests.begin() + j * size, read_buffers.begin() + j * size, url_requests.size() - j * size));
+        } else {
+            threads.push_back(thread(PullMarketDataMultiURL, url_requests.begin() + j * size, read_buffers.begin() + j * size, size));
+        }
+    }
+
+    for (thread &t : threads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+};
 
 
 int PopulateDailyTrades(const std::string& read_buffer,
