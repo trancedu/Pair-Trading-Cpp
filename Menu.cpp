@@ -5,6 +5,7 @@
 //  Created by 杜学渊 on 2/19/22.
 //  Modified by Hubert on 3/2/22
 //  Modified by Qinyan on 3/5/22
+//  Modified by Nicole
 //
 
 #include <iostream>
@@ -197,33 +198,34 @@ int main(int argc, const char* argv[]) {
 //
             
             
-			for (auto& symbol : symbols_vec)
-			{
-                daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
-                url_requests.push_back(daily_url_request);
-				string daily_read_buffer;
-				cout << "symbol: " << symbol << endl;
-				daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
+			//for (auto& symbol : symbols_vec)
+			//{
+   //             daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
+   //             url_requests.push_back(daily_url_request);
+			//	string daily_read_buffer;
+			//	cout << "symbol: " << symbol << endl;
+			//	daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
 
-				PullMarketData(daily_url_request, daily_read_buffer);
+			//	PullMarketData(daily_url_request, daily_read_buffer);
 
-				Stock stock(symbol, {});
-				PopulateDailyTrades(daily_read_buffer, stock);
-				stockMap[symbol] = stock;
-			}
+			//	Stock stock(symbol, {});
+			//	PopulateDailyTrades(daily_read_buffer, stock);
+			//	stockMap[symbol] = stock;
+			//}
             
             // Multi thread but has problems
-//            for (auto& symbol : symbols_vec)
-//            {
-//                daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
-//                url_requests.push_back(daily_url_request);
-//            PullMarketDataMultiThread(url_requests, read_buffers, Num_threads);
-//            for (int i = 0; i < symbols_vec.size(); i++)
-//            {
-//                Stock stock(symbols_vec[i], {});
-//                PopulateDailyTrades(read_buffers[i], stock);
-//                stockMap[symbols_vec[i]] = stock;
-//            }
+			for (auto& symbol : symbols_vec)
+			{
+				daily_url_request = daily_url_common + symbol + ".US?" + "from=" + start_date + "&to=" + end_date + "&api_token=" + api_token + "&period=d&fmt=json";
+				url_requests.push_back(daily_url_request);
+			}
+			PullMarketDataMultiThread(url_requests, read_buffers, Num_threads);
+            for (int i = 0; i < symbols_vec.size(); i++)
+            {
+                Stock stock(symbols_vec[i], {});
+                PopulateDailyTrades(read_buffers[i], stock);
+                stockMap[symbols_vec[i]] = stock;
+            }
 			
 			cout << "Finished populating stock data" << endl;
 			//getpairprice(stockMap, allpairs, allpairprices);
