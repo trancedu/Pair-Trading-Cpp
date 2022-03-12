@@ -82,7 +82,7 @@ int PullMarketDataMultiURL(std::vector<std::string>::const_iterator url_requests
         //adding a user agent
         curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0");
         curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
+        //curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
         curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0);
 
         // send all data to this function
