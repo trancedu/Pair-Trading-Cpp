@@ -27,5 +27,4 @@ int PullMarketData(const std::string& url_request, std::string& read_buffer);
 int PopulateDailyTrades(const std::string& read_buffer,
                     Stock& stock);
 void PullMarketDataMultiThread(const vector<std::string> & url_requests, vector<std::string> & read_buffers, int Num_threads);
-
-int PullMarketDataMultiURL(const vector<std::string> & url_requests, vector<std::string> & read_buffers);
+int PullMarketDataMultiURL(vector<std::string>::const_iterator url_requests, vector<std::string>::iterator read_buffers, int size);
