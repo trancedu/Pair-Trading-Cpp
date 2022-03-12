@@ -5,6 +5,7 @@
 //  Created by 杜学渊 on 2/19/22.
 //  Modified by Hubert on 3/2/22
 //  Modified by Qinyan on 3/5/22
+//  Modified by Nicole
 //
 
 #include <iostream>
@@ -181,7 +182,7 @@ int main(int argc, const char* argv[]) {
 			// retrieve for each stock
 			string daily_url_request;
             
-            int Num_threads = 2;
+            int Num_threads = 5;
             vector<string> read_buffers;
             vector<string> url_requests;
 //

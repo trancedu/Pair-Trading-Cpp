@@ -59,8 +59,7 @@ int PullMarketData(const std::string& url_request, std::string& read_buffer)
 
 
 int PullMarketDataMultiURL(std::vector<std::string>::const_iterator url_requests, std::vector<std::string>::iterator read_buffers, int size) {
-    //global initiliation of curl before calling a function
-    curl_global_init(CURL_GLOBAL_ALL);
+
     
     for (int j = 0; j < size; j++) {
         //creating session handle
@@ -109,6 +108,9 @@ int PullMarketDataMultiURL(std::vector<std::string>::const_iterator url_requests
 
 void PullMarketDataMultiThread(const std::vector<std::string> & url_requests, std::vector<std::string> & read_buffers, int Num_threads)
 {
+    //global initiliation of curl before calling a function
+    curl_global_init(CURL_GLOBAL_ALL);
+
     int size = url_requests.size() / Num_threads;
     read_buffers.resize(url_requests.size());
     vector<thread> threads;
