@@ -160,9 +160,9 @@ int main(int argc, const char* argv[]) {
 				"adjusted_close2 REAL NOT NULL,"
 				"profit_loss REAL," //this could be in Trades--WT
 				"PRIMARY KEY(symbol1, symbol2, date),"
-                 "FOREIGN KEY(symbol1, date) References Pair1Stocks(symbol, date),"
-                 "FOREIGN KEY(symbol2, date) References Pair2Stocks(symbol, date),"
-                 "FOREIGN KEY(symbol1, symbol2) References PairPrices(symbol1, symbol2)"
+                "FOREIGN KEY(symbol1, date) References Pair1Stocks(symbol, date),"
+                "FOREIGN KEY(symbol2, date) References Pair2Stocks(symbol, date),"
+                "FOREIGN KEY(symbol1, symbol2) References StockPairs(symbol1, symbol2)"
 				");");
 			//We can leave it and create this table later by selecting from Pair1Stocks and Pair2Stocks.--WT
 
@@ -173,7 +173,7 @@ int main(int argc, const char* argv[]) {
 				"date CHAR(20) NOT NULL,"
 				"Profit_loss REAL,"
 				"PRIMARY KEY(symbol1, symbol2, date),"
-                 "FOREIGN KEY(symbol1, symbol2) References PairPrices(symbol1, symbol2)"
+                "FOREIGN KEY(symbol1, symbol2) References PairPrices(symbol1, symbol2)"
 				");");
 
 			for (int i = 0; i < sql_Createtables.size(); i++)
